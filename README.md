@@ -1,6 +1,6 @@
 
 
-Simple command line wrapper around [https://github.com/jrmycanady/gocronometer](gocronometer) that pulls data from cronometer into a json response.  
+Simple command line wrapper around [gocronometer](https://github.com/jrmycanady/gocronometer) that pulls data from cronometer into a json response.  
 Intention is to then use this data from withing homeassistant to automate some nutrition tracking tools.
 
 Usage :
