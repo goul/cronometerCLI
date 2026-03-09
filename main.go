@@ -42,49 +42,75 @@ func main() {
 		fmt.Println("failed to retrieve servings: %s", err)
 	}
 
-	fmt.Println(rawCSVData)
-	r := csv.NewReader(strings.NewReader(rawCSVData))
+	//	fmt.Println(rawCSVData)
+	csvReader := csv.NewReader(strings.NewReader(rawCSVData))
 
 	// first record has all the headers
-	headers, err := r.Read()
+	headers, err := csvReader.Read()
 	if err != nil {
 		log.Fatal(err)
 	}
-	colIndex := make(map[string]int)
-	for i, h := range headers {
-		colIndex[h] = i
+	rowData, err := csvReader.Read()
+	if err != nil {
+		log.Fatal(err) // EOF
 	}
 
-	// Choose the columns you want by name
-	want := []string{"Energy (kcal)", "Protein (g)", "Fibre (g)", "Carbs (g)"}
+	// Extract only the named columns
+	dataMap := make(map[string]float64)
+
+	for col := 0; col < len(headers); col++ {
+		var f float64
+		f, err = strconv.ParseFloat(rowData[col], 64)
+		//if err != nil {
+		//	fmt.Println("Returned value for %s is not a float - %s", rowData[col], err)
+		//}
+
+		dataMap[headers[col]] = f
+	}
+	//	fmt.Println(dataMap)
+
+	// get exercise info
+	rawCSVData, err = c.ExportExercises(context.Background(), extractDate, extractDate)
+	//	fmt.Println(rawCSVData)
+
+	var exerciseTotalMins float64
+	var exerciseTotalCals float64
+
+	csvReader = csv.NewReader(strings.NewReader(rawCSVData))
+
+	// ignore headers
+	headers, err = csvReader.Read()
+
+	//Row data is in form Day,Group,Exercise,Minutes,Calories Burned
 	for {
-		row, err := r.Read()
+		rowData, err = csvReader.Read()
 		if err != nil {
-			break // EOF
+			break // exit
 		}
+		var val float64
 
-		// Extract only the named columns
-		selectedMap := make(map[string]float64)
-		for _, col := range want {
-			idx := colIndex[col]
-			var f float64
-			f, err = strconv.ParseFloat(row[idx], 64)
-			if err != nil {
-				fmt.Println("Returned value for %s is not a float - %s", row[idx], err)
-			}
-			selectedMap[col] = f
-		}
-
-		fmt.Println(selectedMap)
-		var jsonStr []byte
-		jsonStr, err = json.Marshal(selectedMap)
+		val, err = strconv.ParseFloat(rowData[3], 64)
 		if err != nil {
-			fmt.Println("failed to retrieve servings: %s", err)
+			fmt.Println("Returned value for %s is not a float - %s", rowData[3], err)
 		}
-		fmt.Println(string(jsonStr))
+		exerciseTotalMins += val
+		val, err = strconv.ParseFloat(rowData[4], 64)
+		if err != nil {
+			fmt.Println("Returned value for %s is not a float - %s", rowData[3], err)
+		}
+		exerciseTotalCals += val
 
-		//rawCSVData, err = c.ExportExercises(context.Background(), extractDate, extractDate)
-		//fmt.Println(rawCSVData)
 	}
+
+	dataMap["Exercise Minute"] = exerciseTotalMins
+	dataMap["Exercise Cals"] = exerciseTotalCals
+
+	var jsonStr []byte
+	jsonStr, err = json.Marshal(dataMap)
+	if err != nil {
+		fmt.Println("failed to marshal our map into json: %s", err)
+	}
+
+	fmt.Println(string(jsonStr))
 
 }
