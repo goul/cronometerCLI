@@ -2,6 +2,13 @@ module cronometerCLI
 
 go 1.26
 
-require github.com/jrmycanady/gocronometer v1.5.1
+require (
+	github.com/eclipse/paho.mqtt.golang v1.5.1
+	github.com/jrmycanady/gocronometer v1.5.1
+)
 
-require golang.org/x/net v0.51.0 // indirect
+require (
+	github.com/gorilla/websocket v1.5.3 // indirect
+	golang.org/x/net v0.51.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+)
