@@ -123,14 +123,26 @@ func main() {
 	mqttUser := flag.String("mqttUser", "", "MQTT User")
 	mqttPass := flag.String("mqttPassword", "", "MQTT Password")
 
+	debug := false
+	flag.BoolVar(&debug, "debug", false, "Debug flag")
+
 	flag.Parse()
 
+	if debug {
+		fmt.Println("Connecting to MQTT")
+	}
 	// create connection to mqtt server
 	mqttClient := connectToMQTT(*mqttServer, *mqttUser, *mqttPass)
 
 	// Create the client to cronometer.
+	if debug {
+		fmt.Println("Connecting to cronometer")
+	}
 	c := gocronometer.NewClient(nil)
 
+	if debug {
+		fmt.Println("Logging in to cronometer")
+	}
 	// Login to cronometer.
 	err := c.Login(context.Background(), *username, *password)
 	if err != nil {
@@ -140,11 +152,17 @@ func main() {
 	// this is the date to extract or infor for.
 	extractDate := time.Date(*year, time.Month(*month), *day, 0, 0, 0, 0, time.UTC)
 
+	if debug {
+		fmt.Println("Pulling raw data for nutrition")
+	}
 	// Retrieve the export data.
 	var rawCSVData string
 	rawCSVData, err = c.ExportDailyNutrition(context.Background(), extractDate, extractDate)
 	if err != nil {
 		fmt.Println("failed to retrieve servings: %s", err)
+	}
+	if debug {
+		fmt.Println("Raw nutrition data : %s", rawCSVData)
 	}
 
 	//	fmt.Println(rawCSVData)
@@ -156,6 +174,10 @@ func main() {
 		log.Fatal(err)
 	}
 
+	if debug {
+		fmt.Println("Parsing csv")
+	}
+
 	// now the actual data
 	rowData, err := csvReader.Read()
 	if err != nil {
@@ -163,13 +185,23 @@ func main() {
 	}
 	itemNames, itemValues, itemUnits := extractNamesValsAndUnits(headers, rowData)
 
+	if debug {
+		fmt.Println("Requesting exercise data")
+	}
 	// get the exercise info
 	// get exercise info
 	rawCSVData, err = c.ExportExercises(context.Background(), extractDate, extractDate)
 
+	if debug {
+		fmt.Println("Raw exercise data : %s", rawCSVData)
+	}
+
 	var exerciseTotalMins float64
 	var exerciseTotalCals float64
 
+	if debug {
+		fmt.Println("Parsing csv")
+	}
 	csvReader = csv.NewReader(strings.NewReader(rawCSVData))
 
 	// ignore headers
@@ -207,12 +239,18 @@ func main() {
 	itemValues = append(itemValues, strconv.FormatFloat(exerciseTotalCals, 'f', -1, 64))
 	itemUnits = append(itemUnits, "kcal")
 
-	//fmt.Println(itemNames)
-	//fmt.Println(itemUnits)
-	//fmt.Println(itemValues)
+	fmt.Println(itemNames)
+	fmt.Println(itemUnits)
+	fmt.Println(itemValues)
 
+	if debug {
+		fmt.Println("Sending Config messages")
+	}
 	for i := 0; i < len(itemNames); i++ {
 		sendConfigMessage(mqttClient, itemNames[i], itemUnits[i])
+	}
+	if debug {
+		fmt.Println("Sending data messages")
 	}
 	sendDataMessage(mqttClient, itemNames, itemValues)
 
