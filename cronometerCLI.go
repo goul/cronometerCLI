@@ -52,7 +52,12 @@ func extractNamesValsAndUnits(headerNames []string, values []string) ([]string, 
 			title = strings.ReplaceAll(title, " ", "_")
 			title = strings.ReplaceAll(title, "-", "_")
 			titles = append(titles, title)
-			vals = append(vals, values[i])
+			if values[i] != "" {
+				vals = append(vals, values[i])
+			} else {
+				vals = append(vals, "0")
+			}
+
 		} else {
 			log.Println("Header was a little odd %s - unable to find units in brackets", full)
 		}
