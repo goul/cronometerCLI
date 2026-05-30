@@ -16,3 +16,8 @@ year/month/day is the day of data to pull. This returns a json structure with al
 eg. cronometerCLI -username paul@goulbourn.com -password=myPassword  -year=2026 -month=3 -day=9 -mqttServer=tcp://homeassistant.local:1883/ -mqttUser=demo -mqttPassword=demo
 ```
 
+Build Notes :
+```
+go build
+```
+Will create a platform local binary.
