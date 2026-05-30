@@ -183,6 +183,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err) // EOF
 	}
+	// reader has a row for each meal in use and one labelled "Total" - skip all bar total.
+	for rowData[1] != "Total" {
+		rowData, err = csvReader.Read()
+		if err != nil {
+			log.Fatal(err) // EOF
+		}
+	}
 	itemNames, itemValues, itemUnits := extractNamesValsAndUnits(headers, rowData)
 
 	if debug {
